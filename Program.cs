@@ -1,5 +1,8 @@
 using CreditCardStatementApi.Data;
 using CreditCardStatementApi.Model;
+using CreditCardStatementApi.Repositories;
+using CreditCardStatementApi.Services;
+using CreditCardStatementApi.Services.Auth;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
@@ -13,26 +16,39 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 
-//builder.Services.AddDbContext<ApplicationDBContext>( options => {
-//    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
-//});
+builder.Services.AddDbContext<ApplicationDBContext>(options =>
+{
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
+});
 
 builder.Services.AddIdentity<UserModel,IdentityRole>(options => { 
 })
     .AddEntityFrameworkStores<ApplicationDBContext>()
     .AddDefaultTokenProviders();
 
+
+builder.Services.AddAutoMapper(typeof(Program));
+builder.Services.AddTransient<IStatementRepo,StatementRepo>();
+builder.Services.AddTransient<IStatementService,StatementService>();
+
+builder.Services.AddTransient<IAuthService,AuthService>();
+
+
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
+    app.UseDeveloperExceptionPage(); // Add this to see real error
+
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
 app.UseHttpsRedirection();
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
