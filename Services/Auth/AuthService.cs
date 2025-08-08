@@ -3,6 +3,7 @@ using CreditCardStatementApi.Model;
 using Microsoft.AspNetCore.Identity;
 using System.Security.Authentication;
 using WebApplicationAPI.DTO;
+using WebApplicationAPI.Service.Auth;
 
 namespace CreditCardStatementApi.Services.Auth
 {
@@ -10,11 +11,13 @@ namespace CreditCardStatementApi.Services.Auth
     {
         private readonly UserManager<UserModel> _userManager;
         private readonly IMapper _mapper;
+        public readonly ITokenService _tokenService;
 
-        public AuthService(UserManager<UserModel> userManager,IMapper mapper)
+        public AuthService(UserManager<UserModel> userManager,IMapper mapper,ITokenService tokenService)
         {
             _userManager = userManager;
             _mapper = mapper;
+            _tokenService = tokenService;
         }
         public async Task<UserResponse> login(UserLoginRequest userRequest)
         {
@@ -26,16 +29,18 @@ namespace CreditCardStatementApi.Services.Auth
                 throw new InvalidCredentialException("The email or password is incorrect");
             }
 
+            /// create token
+           var token = await _tokenService.GenerateToken(user);
+
             var response = await _userManager.UpdateAsync(userModel);
             if(!response.Succeeded)
             {
                 throw new Exception("Can't update user");
             }
-            // login
+
             var userResponse = _mapper.Map<UserResponse>(user);
-            userResponse.Token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWUsImlhdCI6MTUxNjIzOTAyMn0.KMUFsIDTnFmyG3nMiGM6H9FNFUROf3wh7SmqJp-QV30";
+            userResponse.Token = token;
             return userResponse;
-            /// create token
 
         }
 
@@ -59,14 +64,16 @@ namespace CreditCardStatementApi.Services.Auth
                 {
                     errors += item.Description + " ";
                     
-                }        
-                // return error
+                }  
+                throw new Exception(errors);    
             }
             await _userManager.AddToRoleAsync(userModel, userRequest.Role);
 
             //GENERATE TOKEN
+            var token = await _tokenService.GenerateToken(userModel);
+
             var userResponse = _mapper.Map<UserResponse>(userModel);
-            userResponse.Token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWUsImlhdCI6MTUxNjIzOTAyMn0.KMUFsIDTnFmyG3nMiGM6H9FNFUROf3wh7SmqJp-QV30";
+            userResponse.Token = token;
             userResponse.Role = userRequest.Role; 
             
             return userResponse;

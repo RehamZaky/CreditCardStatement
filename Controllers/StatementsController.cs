@@ -1,5 +1,5 @@
 ﻿using CreditCardStatementApi.DTO;
-using CreditCardStatementApi.Services;
+using CreditCardStatementApi.Services.Statements;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 

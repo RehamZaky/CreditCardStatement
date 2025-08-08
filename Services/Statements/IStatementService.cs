@@ -1,7 +1,7 @@
 ﻿using CreditCardStatementApi.DTO;
 using CreditCardStatementApi.Model;
 
-namespace CreditCardStatementApi.Services
+namespace CreditCardStatementApi.Services.Statements
 {
     public interface IStatementService
     {
