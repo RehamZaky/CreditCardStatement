@@ -9,6 +9,8 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using CreditCardStatementApi.Services.Statements;
 using WebApplicationAPI.Service.Auth;
+using StackExchange.Redis;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -67,6 +69,13 @@ builder.Services.AddDbContext<ApplicationDBContext>(options =>
 {
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
 });
+
+// Register ConnectionMultiplexer as singleton
+builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
+{
+    return ConnectionMultiplexer.Connect(builder.Configuration.GetValue<String>("Redis:Connection"));
+});
+
 
 builder.Services.AddIdentity<UserModel,IdentityRole>(options => { 
 })
