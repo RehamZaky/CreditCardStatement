@@ -5,9 +5,9 @@ namespace CreditCardStatementApi.Services.Statements
 {
     public interface IStatementService
     {
-        Task<List<Statement>> GetPeriodStatements(DatePeriodDTO periodDTO);
+        Task<List<StatementDTO>> GetPeriodStatements(DatePeriodDTO periodDTO);
 
-        Task<Statement> GetMonthStatement(DateDTO month);
+        Task<StatementDTO> GetMonthStatement(DateDTO month);
 
         Task<Statement> AddStatement(StatementDTO statementDTO);
     }

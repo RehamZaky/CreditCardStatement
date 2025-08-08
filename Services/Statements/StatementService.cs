@@ -18,13 +18,24 @@ namespace CreditCardStatementApi.Services.Statements
         public async Task<Statement> AddStatement(StatementDTO statementDTO)
         {
 
+            if (statementDTO.AmountDue < 0 || statementDTO.TransactionsDTO.Amount < 0)
+            {
+                throw new Exception("Amounts can't be negative");
+            }
+            if(DateTime.UtcNow.CompareTo(statementDTO.TransactionsDTO.Date) < 0)
+            {
+                throw new Exception("Transaction Date must be in the past");
+
+            }
+
             var statement = _mapper.Map<StatementDTO, Statement>(statementDTO);
             statement.StatementMonth = new DateOnly(DateTime.UtcNow.Year, DateTime.UtcNow.Month, 1);
-            var availableStatement = _statementRepo.GetMonthStatement(statementDTO.UserId, statement.StatementMonth);
+            var availableStatement = await _statementRepo.GetMonthStatement(statementDTO.UserId, statement.StatementMonth);
             if (availableStatement != null)
             {
                 throw new InvalidOperationException("Statement of the month is already exist");
             }
+
 
             var statementResponse = await _statementRepo.AddStatement(statement);
 
@@ -36,16 +47,32 @@ namespace CreditCardStatementApi.Services.Statements
 
         }
 
-        public async Task<Statement> GetMonthStatement(DateDTO month)
+        public async Task<StatementDTO> GetMonthStatement(DateDTO month)
         {
+            var today = DateOnly.FromDateTime(DateTime.UtcNow);
             var date = new DateOnly(month.Year, month.Month, 1);
-            return await _statementRepo.GetMonthStatement(month.UserId, date);
+            if(date.CompareTo(today) > 0)
+            {
+                throw new Exception("Date can't be in the future");
+            }
+            var statement = await _statementRepo.GetMonthStatement(month.UserId, date);
+            if (statement == null)
+                return null;
+            return _mapper.Map<StatementDTO>(statement);
 
         }
 
-        public async Task<List<Statement>> GetPeriodStatements(DatePeriodDTO periodDTO)
+        public async Task<List<StatementDTO>> GetPeriodStatements(DatePeriodDTO periodDTO)
         {
-            return await _statementRepo.GetPeriodStatements(periodDTO);
+            var today = DateOnly.FromDateTime(DateTime.UtcNow);
+            var date = new DateOnly(periodDTO.StartMonth.Year, periodDTO.StartMonth.Month, 1);
+            if (date.CompareTo(today) > 0)
+            {
+                throw new Exception("Date can't be in the future");
+            }
+
+            var statement = await _statementRepo.GetPeriodStatements(periodDTO);
+            return _mapper.Map<List<StatementDTO>>(statement);
         }
     }
 }
